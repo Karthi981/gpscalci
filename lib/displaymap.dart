@@ -293,8 +293,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () async {
                   Position position = await _determinePosition();
 
-
                    markers.clear();
+                   points.clear();
+                   polygonpoints.clear();
+                   _polygon.clear();
                   markers.add(Marker(
                       markerId:  MarkerId(position.toString()),
                       position: LatLng(position.latitude, position.longitude)));
@@ -304,7 +306,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                   final GoogleMapController controller = await _controller.future;
                   controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
-
                   setState(() {});
 
                 },
