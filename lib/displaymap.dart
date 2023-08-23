@@ -296,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                    markers.clear();
                   markers.add(Marker(
-                      markerId:  MarkerId('currentLocation'),
+                      markerId:  MarkerId(position.toString()),
                       position: LatLng(position.latitude, position.longitude)));
                   CameraPosition cameraPosition = new CameraPosition(
                     target: LatLng(position.latitude, position.longitude),
