@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'mathutil.dart';
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Completer<GoogleMapController> _controller = Completer();
   Set<Marker> markers = Set();
   //markers for google map
-  LatLng showLocation = LatLng(11.055372, 77.120339);
+  var showLocation = LatLng(11.055372, 77.120339);
   MapType viewer=  MapType.normal;
    Set<Polyline> _polyline = {};
    Set<Polygon> _polygon ={};
@@ -167,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Positioned(
               top: 20,
-              right: 30,
+              right: 20,
               child: FloatingActionButton(
                   onPressed: Changemapview,
                 child: Icon(Icons.change_circle),
@@ -285,6 +286,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            Positioned(
+              top: 88,
+              right: 20,
+              child: FloatingActionButton(
+                onPressed: () async {
+                  Position position = await _determinePosition();
+
+
+                   markers.clear();
+                  markers.add(Marker(
+                      markerId:  MarkerId('currentLocation'),
+                      position: LatLng(position.latitude, position.longitude)));
+                  CameraPosition cameraPosition = new CameraPosition(
+                    target: LatLng(position.latitude, position.longitude),
+                    zoom: 24,
+                  );
+                  final GoogleMapController controller = await _controller.future;
+                  controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+
+                  setState(() {});
+
+                },
+                child: Icon(Icons.location_city),
+
+              ),
+            )
           ],
         ),
     );
@@ -360,5 +387,33 @@ class _HomeScreenState extends State<HomeScreen> {
     final deltaLng = lng1 - lng2;
     final t = tan1 * tan2;
     return 2 * atan2(t * sin(deltaLng), 1 + t * cos(deltaLng));
+  }
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled');
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        return Future.error("Location permission denied");
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied');
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+
+    return position;
   }
 }
