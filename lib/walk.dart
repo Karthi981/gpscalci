@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:gpscalci/Gps.dart';
 
 
 // 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
@@ -15,8 +16,9 @@ class Walk extends StatefulWidget {
 
 class _WalkState extends State<Walk> {
 
-
-  LatLng showLocation =LatLng(11.004556, 76.961632);
+ final Gps _gps= Gps();
+ Position? _userposition;
+ Exception? _exception;
 
   MapType _currentMapType = MapType.normal;
   Completer<GoogleMapController> _controller = Completer();
@@ -31,9 +33,16 @@ class _WalkState extends State<Walk> {
     });
 
   }
+
+  void _handlepositionStream(Position position){
+    setState(() {
+      _userposition=position;
+    });
+  }
   void initState(){
     super.initState();
-    getLocation();
+    _gps.startPositionstream(_handlepositionStream);
+    //getLocation();
   }
   void _onMapType() {
     setState(() {
@@ -44,48 +53,47 @@ class _WalkState extends State<Walk> {
   }
 
   ///permission
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled');
-    }
-
-    permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-
-      if (permission == LocationPermission.denied) {
-        return Future.error("Location permission denied");
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied');
-    }
-
-    Position position = await Geolocator.getCurrentPosition();
-
-    return position;
-  }
+  // Future<Position> _determinePosition() async {
+  //   bool serviceEnabled;
+  //   LocationPermission permission;
+  //
+  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  //
+  //   if (!serviceEnabled) {
+  //     return Future.error('Location services are disabled');
+  //   }
+  //
+  //   permission = await Geolocator.checkPermission();
+  //
+  //   if (permission == LocationPermission.denied) {
+  //     permission = await Geolocator.requestPermission();
+  //
+  //     if (permission == LocationPermission.denied) {
+  //       return Future.error("Location permission denied");
+  //     }
+  //   }
+  //
+  //   if (permission == LocationPermission.deniedForever) {
+  //     return Future.error('Location permissions are permanently denied');
+  //   }
+  //
+  //   Position position = await Geolocator.getCurrentPosition();
+  //
+  //   return position;
+  // }
 
   ///get location
   getLocation() async {
-    Position position = await _determinePosition();
-    _markers.clear();
+
     setState(() {
-      polylinevertices.add(LatLng(position.latitude,position.longitude));
+      polylinevertices.add(LatLng(_userposition!.latitude,_userposition!.longitude));
       setState(() {
         _markers.add(
             Marker(
-              markerId: MarkerId(position.toString()),
-              position: LatLng(position.latitude,position.longitude),
+              markerId: MarkerId(_userposition.toString()),
+              position: LatLng(_userposition!.latitude,_userposition!.longitude),
               infoWindow: InfoWindow(
-                title: 'Lat=${position.latitude.toStringAsFixed(3)},Long:${position.longitude.toStringAsFixed(3)}',
+                title: 'Lat=${_userposition!.latitude.toStringAsFixed(3)},Long:${_userposition!.longitude.toStringAsFixed(3)}',
               ),
               icon:
               BitmapDescriptor.defaultMarker,
@@ -104,7 +112,7 @@ class _WalkState extends State<Walk> {
       );
     }  );
     CameraPosition cameraPosition = new CameraPosition(
-      target: LatLng(position.latitude, position.longitude),
+      target: LatLng(_userposition!.latitude, _userposition!.longitude),
       zoom: 24,
     );
 
@@ -154,7 +162,7 @@ class _WalkState extends State<Walk> {
                 mapType: _currentMapType,
                 onMapCreated: _onMapCreated,
                 initialCameraPosition: CameraPosition(
-                  target: showLocation,
+                  target: LatLng(_userposition!.latitude, _userposition!.longitude),
 
                   zoom: 12,
                 ),
@@ -191,18 +199,16 @@ class _WalkState extends State<Walk> {
 
                   )
               ),
-
-
-
-
-
-
-//
-
             ]
         ),
 
     ),
     );
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _gps.stoppositionStream();
   }
 }
