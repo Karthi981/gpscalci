@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1049261123212",
+    "project_id": "ecommerce-7b605",
+    "storage_bucket": "ecommerce-7b605.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049261123212:android:162a889b1a36b6c62ebda9",
+        "android_client_info": {
+          "package_name": "com.Evaly.Evaly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1049261123212-f3jrknfpu0fmv2fvqbco88185a1h4l13.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuLhsu-SSOWJlk9CT-FSlWNt6dQoNWMNw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1049261123212-f3jrknfpu0fmv2fvqbco88185a1h4l13.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
