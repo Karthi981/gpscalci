@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gpscalci/Gps.dart';
@@ -17,7 +20,9 @@ class Walk extends StatefulWidget {
 
 class _WalkState extends State<Walk> {
 
+  var showLocation = LatLng(11.055372, 77.120339);
  final Gps _gps= Gps();
+ Set<Marker>startmarker={};
  Position? _userposition;
   var distance;
   MapType _currentMapType = MapType.normal;
@@ -26,20 +31,36 @@ class _WalkState extends State<Walk> {
   final Set<Polyline> polyline={};
   List<LatLng> polylinevertices=[];
  List<LatLng> Distancelatlng=[];
+ var Gotposition = false ;
+ var clk=true;
+ var _startmarker=true;
+ var walkdistance;
+  Uint8List? marketimages;
+  List<String> images = ['assets/marker.png','assets/marker1.png'];
+
+
+  Future<Uint8List> getImages(String path, int width) async{
+    ByteData data = await rootBundle.load(path);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetHeight: width);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return(await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+
+  }
+
+
   void _onMapCreated(GoogleMapController controller) {
     setState(() {
       _controller.complete(controller);
-
-
     });
 
   }
 
-  void _handlepositionStream(Position position){
-    setState(()  {
+   void _handlepositionStream(Position position)async {
+    Gotposition=true;
+    final Uint8List markIcons = await getImages(images[0], 100);
+    setState(() {
+      _userposition=  position;
       _markers.clear();
-      _userposition=position;
-      print(position);
       Distancelatlng.add(LatLng(_userposition!.latitude,_userposition!.longitude));
       polylinevertices.add(LatLng(_userposition!.latitude,_userposition!.longitude));
       _markers.add(
@@ -49,8 +70,7 @@ class _WalkState extends State<Walk> {
             infoWindow: InfoWindow(
               title: 'Lat=${_userposition!.latitude.toStringAsFixed(3)},Long:${_userposition!.longitude.toStringAsFixed(3)}',
             ),
-            icon:
-            BitmapDescriptor.defaultMarker,
+            icon: BitmapDescriptor.fromBytes(markIcons),
             onDragEnd:  ((LatLng newPosition) {
 
             }),
@@ -65,10 +85,27 @@ class _WalkState extends State<Walk> {
           ),
       );
     });
+    if(_startmarker){
+      _startmarker=false;
+      startmarker.add(
+          Marker(
+            markerId: MarkerId(_userposition.toString()),
+            position: LatLng(_userposition!.latitude,_userposition!.longitude),
+            infoWindow: InfoWindow(
+              title: 'Lat=${_userposition!.latitude.toStringAsFixed(3)},Long:${_userposition!.longitude.toStringAsFixed(3)}',
+            ),
+            icon:
+            BitmapDescriptor.defaultMarkerWithHue(200),
+            onDragEnd:  ((LatLng newPosition) {
+
+            }),
+
+          ));
+    }
   }
   void initState(){
     super.initState();
-    _gps.startPositionstream(_handlepositionStream);
+
     //getLocation();
   }
   void _onMapType() {
@@ -78,95 +115,6 @@ class _WalkState extends State<Walk> {
           : MapType.normal;
     });
   }
-
-  ///permission
-  // Future<Position> _determinePosition() async {
-  //   bool serviceEnabled;
-  //   LocationPermission permission;
-  //
-  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  //
-  //   if (!serviceEnabled) {
-  //     return Future.error('Location services are disabled');
-  //   }
-  //
-  //   permission = await Geolocator.checkPermission();
-  //
-  //   if (permission == LocationPermission.denied) {
-  //     permission = await Geolocator.requestPermission();
-  //
-  //     if (permission == LocationPermission.denied) {
-  //       return Future.error("Location permission denied");
-  //     }
-  //   }
-  //
-  //   if (permission == LocationPermission.deniedForever) {
-  //     return Future.error('Location permissions are permanently denied');
-  //   }
-  //
-  //   Position position = await Geolocator.getCurrentPosition();
-  //
-  //   return position;
-  // }
-
-  ///get location
-  // getLocation() async {
-  //
-  //   setState(() {
-  //     polylinevertices.add(LatLng(_userposition!.latitude,_userposition!.longitude));
-  //     setState(() {
-  //       _markers.add(
-  //           Marker(
-  //             markerId: MarkerId(_userposition.toString()),
-  //             position: LatLng(_userposition!.latitude,_userposition!.longitude),
-  //             infoWindow: InfoWindow(
-  //               title: 'Lat=${_userposition!.latitude.toStringAsFixed(3)},Long:${_userposition!.longitude.toStringAsFixed(3)}',
-  //             ),
-  //             icon:
-  //             BitmapDescriptor.defaultMarker,
-  //             onDragEnd:  ((LatLng newPosition) {
-  //
-  //             }),
-  //
-  //           ));
-  //     });
-  //     polyline.add(
-  //         Polyline(polylineId: PolylineId("1"),
-  //             points: polylinevertices,
-  //             color: Colors.blue
-  //
-  //         )
-  //     );
-  //   }  );
-  //
-  //   setState(() {});
-  //   // setState(() {
-  //   //   polylinevertices.add(LatLng(loca.latitude!,loca.longitude!));
-  //   //   _markers.add(
-  //   //       Marker(
-  //   //         markerId: MarkerId(loca.toString()),
-  //   //         position: LatLng(loca.latitude!,loca.longitude!),
-  //   //         infoWindow: InfoWindow(
-  //   //           title: 'Lat=${position.latitude.toStringAsFixed(3)},Long:${position.longitude.toStringAsFixed(3)}',
-  //   //         ),
-  //   //         icon:
-  //   //         BitmapDescriptor.defaultMarker,
-  //   //         onDragEnd:  ((LatLng newPosition) {
-  //   //
-  //   //         }),
-  //   //
-  //   //       ));
-  //   //   polyline.add(
-  //   //       Polyline(polylineId: PolylineId("1"),
-  //   //           points: polylinevertices,
-  //   //           color: Colors.blue
-  //   //
-  //   //       ));
-  //   //
-  //   // });
-  //
-  // }
-  ///
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -183,7 +131,7 @@ class _WalkState extends State<Walk> {
                 mapType: _currentMapType,
                 onMapCreated: _onMapCreated,
                 initialCameraPosition: CameraPosition(
-                  target: LatLng(_userposition!.latitude, _userposition!.longitude),
+                  target: Gotposition ? LatLng(_userposition!.latitude, _userposition!.longitude):showLocation,
 
                   zoom: 12,
                 ),
@@ -205,17 +153,63 @@ class _WalkState extends State<Walk> {
                   )
               ),
               Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FloatingActionButton(
+                    onPressed:(){
+                      setState(() {
+                        if(clk){
+                          clk=false;
+                          _gps.startPositionstream(_handlepositionStream);
+
+                        }
+                        else{
+                          clk=true;
+                          _gps.stoppositionStream();
+                        }
+                      });
+
+                    },
+                    child:   clk?Text("Start"):Text("End"),
+                  ),
+
+                ),
+              ),
+              Positioned(
+                top: 10,
+                child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: FloatingActionButton(
                       onPressed:(){
+                        walkdistance=walkDistance()*1000;
+                        _gps.stoppositionStream();
+                        showDialog(context: context,
+                        builder: (BuildContext context){
+                        return AlertDialog(
+                        backgroundColor: Colors.red[200],
+                        title: Center(child: Text('Distance in meters:${walkdistance.toStringAsFixed(3)}')),
+                        actions: [
+                        ElevatedButton(onPressed: (){
+                         startmarker.clear();
+                          _startmarker=true;
+                         _markers.clear();
+                         Distancelatlng.clear();
+                         polylinevertices.clear();
+                           _gps.startPositionstream(_handlepositionStream);
+                        }, child: Text("Undo"))
+                        ],
+                        );
 
+                        });
                       },
-                      child:   Text("start \nEnd"),
+                      child:   Text("Walk distance"),
                     ),
 
                   ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -224,6 +218,7 @@ class _WalkState extends State<Walk> {
                   child: FloatingActionButton(
                     onPressed:(){
                       distance=CalculateDistance()*1000;
+                      var distance1=CalculateDistance();
                       _gps.stoppositionStream();
                       showDialog(context: context,
                           builder: (BuildContext context){
@@ -231,12 +226,14 @@ class _WalkState extends State<Walk> {
                               backgroundColor: Colors.red[200],
                               title: Column(
                                 children: [
-                                  Text('Area in Sq meters:${distance.toStringAsFixed(3)}'),
-                                  Text('Area in Acres:${distance.toStringAsFixed(3)}'),
+                                  Text('Distance in meters:${distance.toStringAsFixed(3)}'),
+                                  Text('Distance in  km:${distance1.toStringAsFixed(3)}'),
                                 ],
                               ),
                               actions: [
                                 ElevatedButton(onPressed: (){
+                                  startmarker.clear();
+                                  _startmarker=true;
                                   _markers.clear();
                                   Distancelatlng.clear();
                                   polylinevertices.clear();
@@ -247,31 +244,13 @@ class _WalkState extends State<Walk> {
 
                           });
                     },
-                    child:   Text("start \nEnd"),
+                    child:   Text("Result"),
                   ),
 
                 ),
               ),
-
-              // Padding(
-              //     padding: const EdgeInsets.all(16.0),
-              //     child: Align(
-              //       alignment: Alignment.topLeft,
-              //       child: FloatingActionButton(
-              //         onPressed:getLocation,
-              //         child:   Column(
-              //           children: [
-              //             Icon(Icons.location_on_outlined),
-              //             Text("start")
-              //           ],
-              //         ),
-              //       ),
-              //
-              //     )
-              // ),
             ]
         ),
-
     ),
     );
   }
@@ -290,6 +269,26 @@ class _WalkState extends State<Walk> {
            (1 - c((lon2 - lon1) * p))/2;
    return 12742 * asin(sqrt(a));
   }
+  double walkDistance(){
+    int changeindex = Distancelatlng.length;
+    print(changeindex);
+    var result = 0.0 ;
+    for (int i = 0; i<changeindex-1;i++) {
+      double lon1 = Distancelatlng[i].longitude;
+      double lon2 = Distancelatlng[i+1].longitude;
+      double lat1 = Distancelatlng[i].latitude;
+      double lat2 = Distancelatlng[i+1].latitude;
+
+      var p = 0.017453292519943295;
+      var c = cos;
+      var a = 0.5 - c((lat2 - lat1) * p)/2 +
+          c(lat1 * p) * c(lat2 * p) *
+              (1 - c((lon2 - lon1) * p))/2;
+      result = result +( 12742 * asin(sqrt(a)));
+    }
+    return result;
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
