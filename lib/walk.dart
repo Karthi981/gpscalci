@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,7 +31,6 @@ class _WalkState extends State<Walk> {
   List<LatLng> polylinevertices=[];
  List<LatLng> Distancelatlng=[];
  var Gotposition = false ;
- var clk=true;
  var _startmarker=true;
  var walkdistance;
   Uint8List? marketimages;
@@ -57,7 +55,7 @@ class _WalkState extends State<Walk> {
 
    void _handlepositionStream(Position position)async {
     Gotposition=true;
-    final Uint8List markIcons = await getImages(images[0], 100);
+    final Uint8List markIcons = await getImages(images[1], 130);
     setState(() {
       _userposition=  position;
       _markers.clear();
@@ -105,7 +103,7 @@ class _WalkState extends State<Walk> {
   }
   void initState(){
     super.initState();
-
+    _gps.startPositionstream(_handlepositionStream);
     //getLocation();
   }
   void _onMapType() {
@@ -117,140 +115,140 @@ class _WalkState extends State<Walk> {
   }
   @override
   Widget build(BuildContext context) {
+    Widget valueget;
+    if(_userposition==null){
+      valueget= Center(child: CircularProgressIndicator());
+    }
+    else{
+      valueget= Stack(
+              children:[
+                GoogleMap(
+                  //polygons: polygons,
+                  // polylines: polyline,
+                  myLocationEnabled: true,
+                  polylines: polyline,
+                  markers: _markers,
+                  mapType: _currentMapType,
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                    target: Gotposition ? LatLng(_userposition!.latitude, _userposition!.longitude):showLocation,
+
+                    zoom: 20,
+                  ),
+                  //onTap:_addPoint ,
+
+                  myLocationButtonEnabled: true,
+
+
+                ),
+                Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: FloatingActionButton(
+                        onPressed:_onMapType,
+                        child:   Icon(Icons.change_circle),
+                      ),
+
+                    )
+                ),
+                Positioned(
+                  top: 80,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FloatingActionButton(
+                        onPressed:(){
+                              _gps.stoppositionStream();
+
+
+                        },
+                        child:  Text("End"),
+                      ),
+
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FloatingActionButton(
+                        onPressed:(){
+                          walkdistance=walkDistance()*1000;
+                          _gps.stoppositionStream();
+                          showDialog(context: context,
+                              builder: (BuildContext context){
+                                return AlertDialog(
+                                  backgroundColor: Colors.red[200],
+                                  title: Center(child: Text('Distance in meters:${walkdistance.toStringAsFixed(3)}')),
+                                  actions: [
+                                    ElevatedButton(onPressed: (){
+                                      startmarker.clear();
+                                      _startmarker=true;
+                                      _markers.clear();
+                                      Distancelatlng.clear();
+                                      polylinevertices.clear();
+                                      _gps.startPositionstream(_handlepositionStream);
+                                    }, child: Text("Undo"))
+                                  ],
+                                );
+
+                              });
+                        },
+                        child:   Text("   Walk\nDistance"),
+                      ),
+
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: FloatingActionButton(
+                      onPressed:(){
+                        distance=CalculateDistance()*1000;
+                        var distance1=CalculateDistance();
+                        _gps.stoppositionStream();
+                        showDialog(context: context,
+                            builder: (BuildContext context){
+                              return AlertDialog(
+                                backgroundColor: Colors.red[200],
+                                title: Column(
+                                  children: [
+                                    Text('Distance in meters:${distance.toStringAsFixed(3)}'),
+                                    Text('Distance in  km:${distance1.toStringAsFixed(3)}'),
+                                  ],
+                                ),
+                                actions: [
+                                  ElevatedButton(onPressed: (){
+                                    startmarker.clear();
+                                    _startmarker=true;
+                                    _markers.clear();
+                                    Distancelatlng.clear();
+                                    polylinevertices.clear();
+                                    _gps.startPositionstream(_handlepositionStream);
+                                  }, child: Text("Undo"))
+                                ],
+                              );
+
+                            });
+                      },
+                      child:   Text("Result"),
+                    ),
+
+                  ),
+                ),
+              ]
+          );    }
     return SafeArea(
       child: Scaffold(
 
-        body: Stack(
-            children:[
-              GoogleMap(
-                //polygons: polygons,
-                // polylines: polyline,
-                myLocationEnabled: true,
-                polylines: polyline,
-                markers: _markers,
-                mapType: _currentMapType,
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: Gotposition ? LatLng(_userposition!.latitude, _userposition!.longitude):showLocation,
-
-                  zoom: 12,
-                ),
-                //onTap:_addPoint ,
-
-                myLocationButtonEnabled: true,
-
-
-              ),
-              Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: FloatingActionButton(
-                      onPressed:_onMapType,
-                      child:   Icon(Icons.change_circle),
-                    ),
-
-                  )
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FloatingActionButton(
-                    onPressed:(){
-                      setState(() {
-                        if(clk){
-                          clk=false;
-                          _gps.startPositionstream(_handlepositionStream);
-
-                        }
-                        else{
-                          clk=true;
-                          _gps.stoppositionStream();
-                        }
-                      });
-
-                    },
-                    child:   clk?Text("Start"):Text("End"),
-                  ),
-
-                ),
-              ),
-              Positioned(
-                top: 10,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: FloatingActionButton(
-                      onPressed:(){
-                        walkdistance=walkDistance()*1000;
-                        _gps.stoppositionStream();
-                        showDialog(context: context,
-                        builder: (BuildContext context){
-                        return AlertDialog(
-                        backgroundColor: Colors.red[200],
-                        title: Center(child: Text('Distance in meters:${walkdistance.toStringAsFixed(3)}')),
-                        actions: [
-                        ElevatedButton(onPressed: (){
-                         startmarker.clear();
-                          _startmarker=true;
-                         _markers.clear();
-                         Distancelatlng.clear();
-                         polylinevertices.clear();
-                           _gps.startPositionstream(_handlepositionStream);
-                        }, child: Text("Undo"))
-                        ],
-                        );
-
-                        });
-                      },
-                      child:   Text("Walk distance"),
-                    ),
-
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: FloatingActionButton(
-                    onPressed:(){
-                      distance=CalculateDistance()*1000;
-                      var distance1=CalculateDistance();
-                      _gps.stoppositionStream();
-                      showDialog(context: context,
-                          builder: (BuildContext context){
-                            return AlertDialog(
-                              backgroundColor: Colors.red[200],
-                              title: Column(
-                                children: [
-                                  Text('Distance in meters:${distance.toStringAsFixed(3)}'),
-                                  Text('Distance in  km:${distance1.toStringAsFixed(3)}'),
-                                ],
-                              ),
-                              actions: [
-                                ElevatedButton(onPressed: (){
-                                  startmarker.clear();
-                                  _startmarker=true;
-                                  _markers.clear();
-                                  Distancelatlng.clear();
-                                  polylinevertices.clear();
-                                  _gps.startPositionstream(_handlepositionStream);
-                                }, child: Text("Undo"))
-                              ],
-                            );
-
-                          });
-                    },
-                    child:   Text("Result"),
-                  ),
-
-                ),
-              ),
-            ]
-        ),
+        body: valueget,
     ),
     );
   }

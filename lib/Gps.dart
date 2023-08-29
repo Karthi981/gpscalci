@@ -26,7 +26,7 @@ class Gps{
     throw Exception("User did not Grant permission");
   }
   _positionstream= await Geolocator.getPositionStream(
-    locationSettings: LocationSettings(accuracy: LocationAccuracy.high)
+    locationSettings: LocationSettings(accuracy: LocationAccuracy.bestForNavigation)
   ).listen((callback) );
   }
 
