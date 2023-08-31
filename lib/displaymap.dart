@@ -2,12 +2,12 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
 import 'Calculate area.dart';
-import 'mathutil.dart';
 
 
 
@@ -76,6 +76,17 @@ class _HomeScreenState extends State<HomeScreen> {
               polylineId: PolylineId('1'),
               points: points,
               color: Colors.green[200]!,
+              onTap: (){
+                Fluttertoast.showToast(
+                    msg: "This is Center Short Toast",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0
+                );
+              }
             ),
         );
       });
@@ -137,6 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: (LatLng point){
                 if(clk){
                   getpolyline(point);
+                  //if(points.length>1){
+                    //CalculateDistance();
+                  //}
                 }
                 else{
                   getpolygon(point);
@@ -298,28 +312,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   double  CalculateDistance(){
      int changeindex = points.length;
+     var totaldistance=0.0;
+      for(int i=0;i<changeindex-1;i++){
+        double lon1 = points[i].longitude;
+        double lon2 = points[i+1].longitude;
+        double lat1 = points[i].latitude;
+        double lat2 = points[i+1].latitude;
 
-      double lon1 = points[0].longitude;
-      double lon2 = points[changeindex-1].longitude;
-      double lat1 = points[0].latitude;
-      double lat2 = points[changeindex-1].latitude;
-
-      var p = 0.017453292519943295;
-      var c = cos;
-      var a = 0.5 - c((lat2 - lat1) * p)/2 +
-          c(lat1 * p) * c(lat2 * p) *
-              (1 - c((lon2 - lon1) * p))/2;
-      return 12742 * asin(sqrt(a));
+        var p = 0.017453292519943295;
+        var c = cos;
+        var a = 0.5 - c((lat2 - lat1) * p)/2 +
+            c(lat1 * p) * c(lat2 * p) *
+                (1 - c((lon2 - lon1) * p))/2;
+         totaldistance = totaldistance + (12742 * asin(sqrt(a)));
+      }
+     return totaldistance;
   }
   num CalculateArea(){
-    final p1 = polygonpoints[0];
-    final p2 = polygonpoints[1];
-    final p3 = polygonpoints[2];
-    final p4 = polygonpoints[3];
+    // final p1 = polygonpoints[0];
+    // final p2 = polygonpoints[1];
+    // final p3 = polygonpoints[2];
+    // final p4 = polygonpoints[3];
     polygonpoints.add(polygonpoints[0]);
     areapoints= polygonpoints;
     print(areapoints);
-    return AreaCalci.computeArea([p1,p2,p3,p4,p1]);
+    return AreaCalci.computeArea(areapoints);
   }
   Future<Position> _determinePosition() async {
     bool serviceEnabled;

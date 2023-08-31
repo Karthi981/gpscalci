@@ -233,11 +233,12 @@ class _WalkareaState extends State<Walkarea> {
     if(polygonVertices.length>=3)
     {
 
-      final p1 = polygonVertices[0];
-      final p2 = polygonVertices[1];
-      final p3 = polygonVertices[2];
-      final p4 = polygonVertices[3];
-      area = AreaCalci.computeArea([p1, p2, p3, p4, p1]);
+      // final p1 = polygonVertices[0];
+      // final p2 = polygonVertices[1];
+      // final p3 = polygonVertices[2];
+      // final p4 = polygonVertices[3];
+      polygonVertices.add(polygonVertices[0]);
+      area = AreaCalci.computeArea(polygonVertices);
     }
     else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

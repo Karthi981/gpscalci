@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:gpscalci/mainpage.dart';
-import 'package:gpscalci/walk.dart';
-
-import 'displaymap.dart';
 
 void main() {
   runApp(const MyApp());
